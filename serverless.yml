@@ -1,0 +1,47 @@
+service: prueba-tecnica
+frameworkVersion: "3"
+provider:
+  name: aws
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "dynamodb:GetItem"
+            - "dynamodb:PutItem"
+          Resource:
+            - !GetAtt Planet.Arn
+
+functions:
+  get-planet:
+    handler: functions/get-planet.handler
+    events:
+      - httpApi:
+          path: /planeta/{id}
+          method: get
+    environment:
+      SWAPI_URL: https://swapi.py4e.com/api
+      PLANET_TABLE: !Ref Planet
+  save-planet:
+    handler: functions/save-planet.handler
+    events:
+      - httpApi:
+          path: /planeta/{id}
+          method: post
+    environment:
+      PLANET_TABLE: !Ref Planet
+      SWAPI_URL: https://swapi.py4e.com/api
+
+resources:
+  Resources:
+    Planet:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
